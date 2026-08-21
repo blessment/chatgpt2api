@@ -2,7 +2,7 @@
   "auth-key": "chatgpt2api",
   "refresh_account_interval_minute": 5,
   "image_retention_days": 15,
-  "image_poll_timeout_secs": 120,
+  "image_poll_timeout_secs": 180,
   "auto_remove_rate_limited_accounts": false,
   "auto_remove_invalid_accounts": true,
   "log_levels": [
@@ -71,8 +71,8 @@
   },
   "image_account_concurrency": 3,
   "image_parallel_generation": true,
-  "image_poll_interval_secs": 10,
-  "image_poll_initial_wait_secs": 10,
+  "image_poll_interval_secs": 30,
+  "image_poll_initial_wait_secs": 30,
   "image_storage": {
     "enabled": false,
     "mode": "local",
@@ -82,7 +82,6 @@
     "webdav_root_path": "chatgpt2api/images",
     "public_base_url": ""
   },
-  "image_min_free_mb": 500,
   "chat_completion_cache": {
     "enabled": true,
     "ttl_seconds": 60,
