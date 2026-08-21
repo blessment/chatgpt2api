@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 from contextlib import asynccontextmanager
-from threading import Event
 
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
@@ -9,10 +8,8 @@ from fastapi.responses import FileResponse
 
 from api import accounts, ai, image_tasks, system
 from api.errors import install_exception_handlers
-from api.support import resolve_web_asset, start_limited_account_watcher
-from services.backup_service import backup_service
+from api.support import resolve_web_asset
 from services.config import config
-from services.image_service import start_image_cleanup_scheduler
 
 
 def create_app() -> FastAPI:
@@ -20,18 +17,11 @@ def create_app() -> FastAPI:
 
     @asynccontextmanager
     async def lifespan(_: FastAPI):
-        stop_event = Event()
-        thread = start_limited_account_watcher(stop_event)
-        cleanup_thread = start_image_cleanup_scheduler(stop_event)
-        backup_service.start()
-        config.cleanup_old_images()
-        try:
-            yield
-        finally:
-            stop_event.set()
-            thread.join(timeout=1)
-            cleanup_thread.join(timeout=1)
-            backup_service.stop()
+        # 注：项目已移除所有后台自动活动——
+        #   - 账号自动刷新（account-watcher）已删除，只能通过前端/API 手动刷新
+        #   - 图片自动清理线程已删除，只能手动清理
+        #   - 备份后台调度线程已删除，只能通过 API 手动触发
+        yield
 
     app = FastAPI(title="chatgpt2api", version=app_version, lifespan=lifespan)
     install_exception_handlers(app)
