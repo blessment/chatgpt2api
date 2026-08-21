@@ -303,52 +303,9 @@ class CloudflareR2Client:
 class BackupService:
     def __init__(self) -> None:
         self._lock = threading.RLock()
-        self._stop_event = threading.Event()
-        self._thread: threading.Thread | None = None
         self._running = False
 
-    def start(self) -> None:
-        with self._lock:
-            if self._thread and self._thread.is_alive():
-                return
-            self._stop_event.clear()
-            self._thread = threading.Thread(target=self._run, daemon=True, name="r2-backup-scheduler")
-            self._thread.start()
-
-    def stop(self) -> None:
-        with self._lock:
-            self._stop_event.set()
-            thread = self._thread
-            self._thread = None
-        if thread and thread.is_alive():
-            thread.join(timeout=2)
-
-    def _run(self) -> None:
-        while not self._stop_event.is_set():
-            try:
-                self.run_scheduled_backup_if_needed()
-            except Exception:
-                pass
-            self._stop_event.wait(30)
-
-    def run_scheduled_backup_if_needed(self) -> None:
-        settings = config.get_backup_settings()
-        if not settings.get("enabled"):
-            return
-        state = self.get_status()
-        if state.get("running"):
-            return
-        interval_minutes = int(settings.get("interval_minutes") or 360)
-        last_finished_raw = _clean(state.get("last_finished_at"))
-        if last_finished_raw:
-            try:
-                last_finished = datetime.fromisoformat(last_finished_raw.replace("Z", "+00:00"))
-                elapsed = (_utc_now() - last_finished.astimezone(UTC)).total_seconds()
-                if elapsed < interval_minutes * 60:
-                    return
-            except Exception:
-                pass
-        self.run_backup(trigger="schedule")
+    # 备份后台调度线程已移除：备份只能通过 POST /api/backups/run 手动触发。
 
     def get_status(self) -> dict[str, object]:
         return {
