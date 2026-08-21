@@ -2134,11 +2134,11 @@ class OpenAIBackendAPI:
     ) -> tuple[list[str], list[str]]:
         """Poll the conversation document until image file ids appear or budget runs out.
 
-        - Sleeps image_poll_initial_wait_secs first (default 10s, +jitter). ChatGPT
+        - Sleeps image_poll_initial_wait_secs first (default 30s, +jitter). ChatGPT
           image generation takes ~30s; polling immediately wastes requests and trips
           a transient 429 the upstream returns within ~200ms of the SSE stream
           closing (the conversation document is not yet committed).
-        - Subsequent polls are image_poll_interval_secs apart (default 10s).
+        - Subsequent polls are image_poll_interval_secs apart (default 30s).
         - On upstream 429 / 5xx or network errors, backs off exponentially
           (capped at 16s, +jitter) honoring Retry-After when present.
         - All sleeps stay within timeout_secs; on exhaustion raises ImagePollTimeoutError.
