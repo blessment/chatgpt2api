@@ -1,8 +1,6 @@
 from __future__ import annotations
 
 import io
-import shutil
-import threading
 import time
 import zipfile
 from pathlib import Path
@@ -14,7 +12,6 @@ from PIL import Image, ImageOps
 from services.config import config
 from services.image_storage_service import image_storage_service
 from services.image_tags_service import load_tags, remove_tags
-from utils.log import logger
 
 THUMBNAIL_SIZE = (320, 320)
 
@@ -349,28 +346,7 @@ def download_images_zip(paths: list[str]) -> io.BytesIO:
     return buf
 
 
-def _auto_cleanup_worker(stop_event: threading.Event) -> None:
-    """后台线程：每30分钟检查存储，空间低于阈值自动清理最旧图片"""
-    import shutil
-    min_free_mb = getattr(config, "image_min_free_mb", None)
-    if min_free_mb is None:
-        min_free_mb = 500
-
-    while not stop_event.wait(1800):  # 每30分钟
-        try:
-            config.cleanup_old_images()
-            cleanup_image_thumbnails()
-            usage = shutil.disk_usage(config.images_dir)
-            free_mb = usage.free // (1024 * 1024)
-            if free_mb < min_free_mb:
-                logger.info({"event": "image_auto_cleanup", "free_mb": free_mb, "min_free_mb": min_free_mb})
-                result = delete_to_target(min_free_mb)
-                logger.info({"event": "image_auto_cleanup_done", **result})
-        except Exception:
-            pass
-
-
-def start_image_cleanup_scheduler(stop_event: threading.Event) -> threading.Thread:
-    t = threading.Thread(target=_auto_cleanup_worker, args=(stop_event,), daemon=True, name="image-cleanup")
-    t.start()
-    return t
+# 图片自动清理后台线程已移除（原 _auto_cleanup_worker / start_image_cleanup_scheduler）。
+# 清理改为按需触发：
+#   - 查看图片列表 list_images() 时会顺带清理过期图片与孤立缩略图
+#   - POST /api/images/storage/cleanup-to-target 手动释放磁盘空间
